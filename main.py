@@ -1,19 +1,23 @@
-# essentials
+# essential
+import os
 import sys
 import pandas as pd
+import logging
+import contextlib
 
-# GUI
+# gui
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit, QTextEdit, QPushButton, QVBoxLayout, 
     QFileDialog, QMessageBox, QHBoxLayout, QCheckBox
 )
 from PyQt5.QtCore import QMimeData
 
-# tensor (loading model, padding tokenized integer sequences)
+# tensor (load model, pad tokenized integer sequences)
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# file libraries
+# file processing
 import pickle
 from docx import Document
 import pdfplumber
@@ -23,6 +27,11 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
+
+# logging config
+logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class PlainTextEdit(QTextEdit):
     def insertFromMimeData(self, source: QMimeData):
@@ -37,16 +46,23 @@ class FakeNewsClassifier(QWidget):
         self.dark_mode = False
         self.initUI()
 
-        # loading the saved model, change filepath if you saved the classifier somewhere else or under a different name
-        self.model = load_model('fakenewsdetector.h5')
+        if getattr(sys, 'frozen', False):
+            self.bundle_dir = sys._MEIPASS
+        else:
+            self.bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # loading the tokenizer (important, or model will be much less accurate)
-        with open('tokenizer.pickle', 'rb') as handle:
+        # loading model
+        self.model_path = os.path.join(self.bundle_dir, 'fakenewsdetector.h5')
+        logger.debug(f"Loading model from: {self.model_path}")
+        self.model = load_model(self.model_path)
+
+        # loading tokenizer (already fitted)
+        self.tokenizer_path = os.path.join(self.bundle_dir, 'tokenizer.pickle')
+        logger.debug(f"Loading tokenizer from: {self.tokenizer_path}")
+        with open(self.tokenizer_path, 'rb') as handle:
             self.tokenizer = pickle.load(handle)
 
     def initUI(self):
-
-        # building GUI and initializing
         self.setWindowTitle('IntegriNews AI - Fake News Classifier')
         self.setGeometry(100, 100, 600, 800)
 
@@ -133,8 +149,28 @@ class FakeNewsClassifier(QWidget):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     text = f.read()
         except Exception as e:
+            logger.error(f"Failed to extract text from file: {e}", exc_info=True)
             QMessageBox.critical(self, "Error", f"Failed to extract text from file: {e}")
         return text
+
+    @contextlib.contextmanager
+    def suppress_tf_logging(self):
+        tf_logger = tf.get_logger()
+        previous_level = tf_logger.level
+        tf_logger.setLevel('ERROR')
+        try:
+            with open(os.devnull, 'w') as fnull:
+                old_stdout = sys.stdout
+                old_stderr = sys.stderr
+                sys.stdout = fnull
+                sys.stderr = fnull
+                try:
+                    yield
+                finally:
+                    sys.stdout = old_stdout
+                    sys.stderr = old_stderr
+        finally:
+            tf_logger.setLevel(previous_level)
 
     def classify(self):
         title = self.title_input.text().strip()
@@ -144,31 +180,40 @@ class FakeNewsClassifier(QWidget):
             QMessageBox.warning(self, "Input Error", "Please provide both a title and text for the article.")
             return
 
-        # tokenizing input data (model is trained on tokenized integer sequences)
-        X_seq = self.tokenizer.texts_to_sequences([title + ' ' + text])
-        X_pad = pad_sequences(X_seq, maxlen=1000, padding='post')
+        try:
+            # suppressing tf logs (since console is set to False in the .spec)
+            with self.suppress_tf_logging():
+                logger.debug("Starting classification")
 
-        # result is from 0 - 1, higher result value = the more confident the model is that the article is fake
-        prediction = self.model.predict(X_pad)[0][0]
-        if prediction > 0.8:
-            result = "Highly Likely to be Fake News ({:.2f}% probability)".format(prediction * 100)
-            self.fake_count += 1
-        elif prediction > 0.6:
-            result = "Likely to be Fake News ({:.2f}% probability)".format(prediction * 100)
-            self.fake_count += 1
-        elif prediction > 0.4:
-            result = "Possibly Fake News ({:.2f}% probability)".format(prediction * 100)
-            self.fake_count += 1
-        elif prediction > 0.2:
-            result = "Potentially Real News ({:.2f}% probability)".format((1 - prediction) * 100)
-            self.real_count += 1
-        else:
-            result = "Highly Likely to be Real News ({:.2f}% probability)".format((1 - prediction) * 100)
-            self.real_count += 1
-        
-        self.history.append({'title': title, 'text': text, 'result': result, 'probability': prediction})
-        self.result_label.setText(f'Classification Result: {result}')
-        self.update_plot()
+                # tokenizing input data (model is trained on tokenized integer sequences)
+                X_seq = self.tokenizer.texts_to_sequences([title + ' ' + text])
+                X_pad = pad_sequences(X_seq, maxlen=1000, padding='post')
+
+                # result is from 0 - 1, higher result value = the more confident the model is that the article is fake
+                prediction = self.model.predict(X_pad)[0][0]
+                if prediction > 0.8:
+                    result = "Highly Likely to be Fake News ({:.2f}% probability)".format(prediction * 100)
+                    self.fake_count += 1
+                elif prediction > 0.6:
+                    result = "Likely to be Fake News ({:.2f}% probability)".format(prediction * 100)
+                    self.fake_count += 1
+                elif prediction > 0.4:
+                    result = "Possibly Fake News ({:.2f}% probability)".format(prediction * 100)
+                    self.fake_count += 1
+                elif prediction > 0.2:
+                    result = "Potentially Real News ({:.2f}% probability)".format((1 - prediction) * 100)
+                    self.real_count += 1
+                else:
+                    result = "Highly Likely to be Real News ({:.2f}% probability)".format((1 - prediction) * 100)
+                    self.real_count += 1
+
+                self.history.append({'title': title, 'text': text, 'result': result, 'probability': prediction})
+                self.result_label.setText(f'Classification Result: {result}')
+                self.update_plot()
+
+        except Exception as e:
+            logger.error("An error occurred during classification", exc_info=True)
+            QMessageBox.critical(self, "Error", f"An error occurred during classification: {e}")
 
     def update_plot(self):
         self.canvas.figure.clear()
@@ -203,6 +248,7 @@ class FakeNewsClassifier(QWidget):
                 df.to_csv(file_path, index=False)
                 QMessageBox.information(self, "Success", "Results exported successfully!")
             except Exception as e:
+                logger.error(f"Failed to export results: {e}", exc_info=True)
                 QMessageBox.critical(self, "Error", f"Failed to export results: {e}")
 
 if __name__ == '__main__':
