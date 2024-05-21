@@ -3,7 +3,6 @@ IntegriNews AI is a Fake News Classifier app with extra features, utilizing a cu
 
 .exe can be run from dist/IntregiNews, or you can run the main.py if you have the correct Python version installed alongside all the libraries.
 
-How the application looks:\
 ![image](https://github.com/AizazL/IntegriNews/assets/17864654/0e803f27-7e4b-4428-8bfd-f89fe243e327)
 
 Application Features:
