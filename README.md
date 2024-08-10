@@ -24,7 +24,6 @@ You can run the application in two ways:
 
 ### Prerequisites
 
-- **Python Version**: Ensure you have Python 3.x installed.
-- **Libraries**: Install the necessary libraries using the following command:
+- **Python Version**: Ensure you have Python 3.x installed. 
   ```bash
   pip install -r requirements.txt
