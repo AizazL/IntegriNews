@@ -1,4 +1,6 @@
 # IntegriNews
+![IntegriNewsEdited](https://github.com/user-attachments/assets/e90c1064-e9e8-40bb-b7cf-cb99d99d0d3c)
+
 IntegriNews AI is a Fake News Classifier app with extra features, utilizing a custom built tensor model trained on the WELFake dataset with a 98%+ accuracy.
 
 .exe can be run from dist/IntregiNews (you'll need the _internal folder which contains all the necessary libraries as well), or you can run the main.py if you have the correct Python version installed alongside all the libraries.
