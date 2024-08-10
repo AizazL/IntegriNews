@@ -25,5 +25,4 @@ You can run the application in two ways:
 ### Prerequisites
 
 - **Python Version**: Ensure you have Python 3.x installed. 
-  ```bash
-  pip install -r requirements.txt
+- **Download the `_internal` folder and keep it in the same folder as the distro, or manually install the missing libraries.
