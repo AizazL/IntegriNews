@@ -4,7 +4,7 @@
 
 **IntegriNews AI** is a cutting-edge Fake News Classifier application, leveraging a custom-built TensorFlow model trained on the WELFake dataset. With an accuracy rate exceeding 98%, IntegriNews offers a robust solution for identifying and classifying misinformation.
 
-![App Screenshot](https://github.com/AizazL/IntegriNews/assets/17864654/0e803f27-7e4b-4428-8bfd-f89fe243e327)
+![IntegriNewsDarkMode](https://github.com/user-attachments/assets/22ca1e85-c164-4437-9af6-bee2154c8d5c)
 
 ## Application Features
 
