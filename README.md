@@ -4,7 +4,7 @@ IntegriNews is a fake-news analysis product for quick credibility review. It use
 
 ![IntegriNews homepage](assets/Homepage.png)
 
-## Why This Version Is Stronger
+## Product Highlights
 - Modern architecture with `FastAPI`, `React`, and `TypeScript`
 - Persistent analysis history backed by `SQLite`
 - Drag-and-drop upload support for `.txt`, `.docx`, and `.pdf`
@@ -89,7 +89,7 @@ npm test
 - The tokenizer pickle is stored alongside the model and loaded lazily by the backend service.
 
 ## Tradeoffs And Limitations
-- The classifier is still the original model, so the upgrade focuses on product quality rather than retraining.
+- The classifier remains the original model; this implementation focuses on product experience rather than retraining.
 - Explanation features are heuristic and advisory; they do not claim deep model interpretability.
 - There is no authentication, article scraping, or external news-source verification in v1.
-- Deployment is intentionally deferred until the rebuilt local product is stable and reviewable.
+- Deployment is not included in the current repository workflow; the documented setup targets local use.
