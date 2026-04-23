@@ -1,0 +1,1 @@
+"""IntegriNews backend package."""
