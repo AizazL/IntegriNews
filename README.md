@@ -88,8 +88,3 @@ npm test
 - `backend/model_assets/fakenewsdetector.h5` remains tracked through Git LFS.
 - The tokenizer pickle is stored alongside the model and loaded lazily by the backend service.
 
-## Tradeoffs And Limitations
-- The classifier remains the original model; this implementation focuses on product experience rather than retraining.
-- Explanation features are heuristic and advisory; they do not claim deep model interpretability.
-- There is no authentication, article scraping, or external news-source verification in v1.
-- Deployment is not included in the current repository workflow; the documented setup targets local use.
